@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const cors = require("cors");
 const eventcontroller = require("../controllers/event.controller");
-const { body } = require("express-validator");
+const { query, body } = require("express-validator");
 
 router.use(express.json());
 router.use(cors());
@@ -17,6 +17,17 @@ router.post(
   ],
   eventcontroller.createEvent
 );
-router.get("/getevents", eventcontroller.getEvents);
+router.get(
+  "/getevents",
+  [
+    query("start")
+      .optional()
+      .isISO8601()
+      .withMessage("start must be a valid date"),
+    query("end").optional().isISO8601().withMessage("end must be a valid date"),
+    query("event_name").optional().isString(),
+  ],
+  eventcontroller.getEvents
+);
 
 module.exports = router;
