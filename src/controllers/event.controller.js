@@ -1,15 +1,11 @@
 const { Event } = require("../models/event.model");
-const { EventSchema } = require("../validators/type");
+const { validationResult } = require("express-validator");
 
 module.exports.createEvent = async (req, res) => {
-  //   const reqpayload = EventSchema.safeParse(req.body);
-  //   if (!reqpayload.success) {
-  //     res.status(400).json({
-  //       message: "Invalid request payload",
-  //       errors: reqpayload.error.errors,
-  //     });
-  //     return;
-  //   }
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ errors: errors.array() });
+  }
 
   await Event.create({
     user_id: req.body.user_id,
