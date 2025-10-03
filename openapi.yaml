@@ -1,0 +1,332 @@
+openapi: 3.1.0
+info:
+  title: Analytics Tracker API
+  description: |
+    A comprehensive analytics API for tracking and retrieving user events.
+    This API allows you to:
+    - Track user events with custom properties
+    - Retrieve aggregated event data with filtering options
+    - Filter events by date range and event type
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@analytics-tracker.com
+  license:
+    name: ISC
+    url: https://opensource.org/licenses/ISC
+
+servers:
+  - url: http://localhost:5000
+    description: Development server
+  - url: https://api.analytics-tracker.com
+    description: Production server
+
+tags:
+  - name: events
+    description: Event tracking and analytics operations
+  - name: health
+    description: Health check operations
+
+paths:
+  /:
+    get:
+      tags:
+        - health
+      summary: Health check endpoint
+      description: Simple health check to verify API is running
+      operationId: healthCheck
+      responses:
+        "200":
+          description: API is healthy
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Hello, World!"
+
+  /api/events/createevent:
+    post:
+      tags:
+        - events
+      summary: Create a new analytics event
+      description: |
+        Track a new user event with optional custom properties.
+        Events are automatically timestamped and assigned unique IDs.
+      operationId: createEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEventRequest"
+            examples:
+              button_click:
+                summary: Button click event
+                value:
+                  user_id: "user123"
+                  event_name: "button_click"
+                  event_data:
+                    button_name: "signup"
+                    page: "homepage"
+                  timestamp: "2024-01-15T10:30:00.000Z"
+              page_view:
+                summary: Page view event
+                value:
+                  user_id: "user456"
+                  event_name: "page_view"
+                  event_data:
+                    page: "/dashboard"
+                    referrer: "google.com"
+              minimal_event:
+                summary: Minimal event (only required fields)
+                value:
+                  user_id: "user789"
+                  event_name: "signup"
+      responses:
+        "200":
+          description: Event created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateEventResponse"
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationError"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/events/getevents:
+    get:
+      tags:
+        - events
+      summary: Retrieve aggregated event data
+      description: |
+        Get aggregated counts of events with optional filtering by date range and event name.
+        Returns event counts grouped by event type within the specified time period.
+      operationId: getEvents
+      parameters:
+        - name: start
+          in: query
+          description: Start date for filtering events (ISO 8601 format)
+          required: false
+          schema:
+            type: string
+            format: date
+            example: "2024-01-01"
+        - name: end
+          in: query
+          description: End date for filtering events (ISO 8601 format)
+          required: false
+          schema:
+            type: string
+            format: date
+            example: "2024-12-31"
+        - name: event_name
+          in: query
+          description: Filter events by specific event name
+          required: false
+          schema:
+            type: string
+            example: "button_click"
+      responses:
+        "200":
+          description: Event data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetEventsResponse"
+              examples:
+                with_events:
+                  summary: Response with event data
+                  value:
+                    start: "2024-01-01"
+                    end: "2024-01-31"
+                    events:
+                      button_click: 45
+                      page_view: 123
+                      signup: 12
+                      purchase: 8
+                empty_response:
+                  summary: Response with no events
+                  value:
+                    start: "2024-01-01"
+                    end: "2024-01-31"
+                    events: {}
+                filtered_response:
+                  summary: Filtered by event name
+                  value:
+                    start: "2024-01-01"
+                    end: "2024-01-31"
+                    events:
+                      button_click: 45
+        "422":
+          description: Validation error (invalid date format)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationError"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    CreateEventRequest:
+      type: object
+      required:
+        - user_id
+        - event_name
+      properties:
+        user_id:
+          type: string
+          description: Unique identifier for the user
+          example: "user123"
+          minLength: 1
+        event_name:
+          type: string
+          description: Name of the event being tracked
+          example: "button_click"
+          minLength: 1
+        event_data:
+          type: object
+          description: Custom properties associated with the event
+          additionalProperties: true
+          example:
+            button_name: "signup"
+            page: "homepage"
+            category: "conversion"
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred (ISO 8601 format). Defaults to current time if not provided
+          example: "2024-01-15T10:30:00.000Z"
+
+    CreateEventResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Success message
+          example: "Event created successfully"
+
+    GetEventsResponse:
+      type: object
+      properties:
+        start:
+          type: string
+          format: date
+          description: Start date of the query range
+          example: "2024-01-01"
+        end:
+          type: string
+          format: date
+          description: End date of the query range
+          example: "2024-01-31"
+        events:
+          type: object
+          description: Event counts grouped by event name
+          additionalProperties:
+            type: integer
+            minimum: 0
+          example:
+            button_click: 45
+            page_view: 123
+            signup: 12
+
+    ValidationError:
+      type: object
+      properties:
+        errors:
+          type: array
+          description: List of validation errors
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                example: "field"
+              value:
+                type: string
+                example: ""
+              msg:
+                type: string
+                example: "User ID is required"
+              path:
+                type: string
+                example: "user_id"
+              location:
+                type: string
+                example: "body"
+      example:
+        errors:
+          - type: "field"
+            value: ""
+            msg: "User ID is required"
+            path: "user_id"
+            location: "body"
+          - type: "field"
+            value: ""
+            msg: "Event name is required"
+            path: "event_name"
+            location: "body"
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Internal server error"
+        message:
+          type: string
+          description: Detailed error message
+          example: "Database connection failed"
+
+    Event:
+      type: object
+      description: Internal event model (for reference)
+      properties:
+        event_id:
+          type: string
+          description: Unique identifier for the event (auto-generated UUID)
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        user_id:
+          type: string
+          description: Unique identifier for the user
+          example: "user123"
+        event_name:
+          type: string
+          description: Name of the event
+          example: "button_click"
+        event_data:
+          type: object
+          description: Custom properties associated with the event
+          additionalProperties: true
+          example:
+            button_name: "signup"
+            page: "homepage"
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event was created
+          example: "2024-01-15T10:30:00.000Z"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for API authentication (if implemented)
+# Note: Currently no authentication is implemented
+# security:
+#   - bearerAuth: []

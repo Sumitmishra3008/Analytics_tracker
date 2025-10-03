@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "test": "cross-env NODE_ENV=test jest --runInBand"
+    "test": "cross-env NODE_ENV=test jest --runInBand",
+    "docs": "node server.js && echo 'API Documentation available at http://localhost:5000/api-docs'"
   },
   "keywords": [],
   "author": "",
@@ -19,6 +20,8 @@
     "express-validator": "^7.2.1",
     "http": "^0.0.1-security",
     "mongoose": "^8.18.3",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "uuid": "^8.3.2",
     "zod": "^4.1.11"
   },
