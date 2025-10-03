@@ -29,6 +29,9 @@ npm install
 
 # Set environment variables
 cp .env.example .env
+
+take note of .env.example in src folder and root folder
+copy both as the project has some unconventional structure , package.json is in src folder instead of root folder
 # Edit .env with your MongoDB URI
 
 # Start development server
