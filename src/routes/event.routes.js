@@ -13,7 +13,7 @@ router.post(
     body("user_id").isString().notEmpty(),
     body("event_name").isString().notEmpty(),
     body("event_data").isObject().optional(),
-    // body("timestamp").isISO8601(),
+    body("timestamp").optional().isISO8601(),
   ],
   eventcontroller.createEvent
 );
