@@ -1,0 +1,55 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: analytics_tracker_api
+    ports:
+      - "${PORT:-5000}:5000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT=${PORT:-5000}
+      - DATABASE_URL=mongodb://mongo:27017/${MONGO_DB_NAME:-analytics_tracker}
+    networks:
+      - analytics_network
+    restart: unless-stopped
+    # volumes:
+    #   - ./src:/usr/src/app:ro # Mount source for development (uncomment for live reload)
+    healthcheck:
+      test: ["CMD", "node", "healthcheck.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  mongo:
+    image: mongo:latest
+    container_name: analytics_tracker_mongo
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_DATABASE=${MONGO_DB_NAME:-analytics_tracker}
+    ports:
+      - "27017:27017" # Expose for development access
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - analytics_network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  mongo_data:
+    driver: local
+
+networks:
+  analytics_network:
+    driver: bridge
